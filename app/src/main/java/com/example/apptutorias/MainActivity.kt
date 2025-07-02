@@ -5,13 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.apptutorias.Screen.LoginScreen
 import com.example.apptutorias.Screen.TutoriasScreen
 import com.example.apptutorias.ui.theme.AppTutoriasTheme
+import com.example.apptutorias.viewmodel.LoginViewModel
+import androidx.compose.ui.Modifier
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,13 +28,29 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Scaffold { innerPadding ->
-                        TutoriasScreen(modifier = Modifier.padding(innerPadding))
+                    val navController = rememberNavController()
+                    val loginViewModel: LoginViewModel = viewModel()
+
+                    NavHost(
+                        navController = navController,
+                        startDestination = "login"
+                    ) {
+                        composable("login") {
+                            LoginScreen(
+                                viewModel = loginViewModel,
+                                onLoginSuccess = {
+                                    navController.navigate("tutorias") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable("tutorias") {
+                            TutoriasScreen()
+                        }
                     }
                 }
             }
         }
     }
 }
-
-

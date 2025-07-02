@@ -1,5 +1,7 @@
 package com.example.apptutorias.network
 
+import com.example.apptutorias.network.model.LoginRequest
+import com.example.apptutorias.network.model.LoginResponse
 import com.example.apptutorias.tutoria.Tutoria
 import retrofit2.Call
 import retrofit2.http.Body
@@ -10,6 +12,10 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface TutoriasApiService {
+
+    // Endpoint de login
+    @POST("auth/login")
+    fun login(@Body request: LoginRequest): Call<LoginResponse>
 
     // Obtener todas las tutorías
     @GET("tutorias")
