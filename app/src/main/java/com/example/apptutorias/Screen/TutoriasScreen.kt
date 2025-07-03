@@ -1,3 +1,4 @@
+// TutoriasScreen.kt
 package com.example.apptutorias.Screen
 
 import android.util.Log
@@ -9,17 +10,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.apptutorias.network.RetrofitClient
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.apptutorias.tutoria.Tutoria
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-
+import com.example.apptutorias.viewmodel.TutoriaViewModel
 
 @Composable
-fun TutoriasScreen(modifier: Modifier = Modifier) {
-    var tutorias by remember { mutableStateOf<List<Tutoria>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
+fun TutoriasScreen(
+    viewModel: TutoriaViewModel = viewModel(),
+    modifier: Modifier = Modifier
+) {
+    val tutorias by viewModel.tutorias.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
     var tutoriaEditando by remember { mutableStateOf<Tutoria?>(null) }
     var mostrarDialogoNuevaTutoria by remember { mutableStateOf(false) }
 
@@ -29,21 +32,6 @@ fun TutoriasScreen(modifier: Modifier = Modifier) {
     var costo by remember { mutableStateOf("") }
     var nombreTutor by remember { mutableStateOf("") }
     var correoTutor by remember { mutableStateOf("") }
-
-    fun cargarTutorias() {
-        isLoading = true
-        RetrofitClient.apiService.getTutorias().enqueue(object : Callback<List<Tutoria>> {
-            override fun onResponse(call: Call<List<Tutoria>>, response: Response<List<Tutoria>>) {
-                tutorias = response.body() ?: emptyList()
-                isLoading = false
-            }
-
-            override fun onFailure(call: Call<List<Tutoria>>, t: Throwable) {
-                Log.e("API", "Error: ${t.message}")
-                isLoading = false
-            }
-        })
-    }
 
     fun limpiarCampos() {
         materia = ""
@@ -55,88 +43,92 @@ fun TutoriasScreen(modifier: Modifier = Modifier) {
     }
 
     LaunchedEffect(Unit) {
-        cargarTutorias()
+        viewModel.cargarTutorias()
     }
 
     Box(modifier = modifier.fillMaxSize()) {
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         } else {
-            LazyColumn(modifier = Modifier.padding(16.dp)) {
-                items(tutorias) { tutoria ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        elevation = CardDefaults.cardElevation(4.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Materia: ${tutoria.materia}")
-                            Text("Descripción: ${tutoria.descripcion}")
-                            Text("Hora: ${tutoria.hora}")
-                            Text("Costo: $${tutoria.costo}")
-                            Text("Tutor: ${tutoria.nombreTutor}")
-                            Text("Correo: ${tutoria.correoTutor}")
+            Column {
+                errorMessage?.let { msg ->
+                    Text(
+                        text = msg,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                LazyColumn(modifier = Modifier.weight(1f).padding(16.dp)) {
+                    items(tutorias) { tutoria ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            elevation = CardDefaults.cardElevation(4.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("Materia: ${tutoria.materia}")
+                                Text("Descripción: ${tutoria.descripcion}")
+                                Text("Hora: ${tutoria.hora}")
+                                Text("Costo: $${tutoria.costo}")
+                                Text("Tutor: ${tutoria.nombreTutor}")
+                                Text("Correo: ${tutoria.correoTutor}")
 
-                            Row {
-                                Button(onClick = {
-                                    tutoriaEditando = tutoria
-                                    materia = tutoria.materia ?: ""
-                                    descripcion = tutoria.descripcion ?: ""
-                                    hora = tutoria.hora ?: ""
-                                    costo = tutoria.costo?.toString() ?: ""
-                                    nombreTutor = tutoria.nombreTutor ?: ""
-                                    correoTutor = tutoria.correoTutor ?: ""
-                                }) {
-                                    Text("Editar")
-                                }
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                OutlinedButton(onClick = {
-                                    tutoria.id?.let {
-                                        RetrofitClient.apiService.eliminarTutoria(it).enqueue(object : Callback<Void> {
-                                            override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                                                cargarTutorias()
-                                            }
-
-                                            override fun onFailure(call: Call<Void>, t: Throwable) {
-                                                Log.e("DELETE", "Error al eliminar", t)
-                                            }
-                                        })
+                                Row {
+                                    Button(onClick = {
+                                        tutoriaEditando = tutoria
+                                        materia = tutoria.materia ?: ""
+                                        descripcion = tutoria.descripcion ?: ""
+                                        hora = tutoria.hora ?: ""
+                                        costo = tutoria.costo?.toString() ?: ""
+                                        nombreTutor = tutoria.nombreTutor ?: ""
+                                        correoTutor = tutoria.correoTutor ?: ""
+                                    }) {
+                                        Text("Editar")
                                     }
-                                }) {
-                                    Text("Eliminar")
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    OutlinedButton(onClick = {
+                                        tutoria.id?.let {
+                                            viewModel.eliminarTutoria(it)
+                                        }
+                                    }) {
+                                        Text("Eliminar")
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            FloatingActionButton(
-                onClick = {
-                    limpiarCampos()
-                    mostrarDialogoNuevaTutoria = true
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            ) {
-                Text("+")
+                FloatingActionButton(
+                    onClick = {
+                        limpiarCampos()
+                        tutoriaEditando = null
+                        mostrarDialogoNuevaTutoria = true
+                    },
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(16.dp)
+                ) {
+                    Text("+")
+                }
             }
         }
     }
 
-    tutoriaEditando?.let { editando ->
+    // Dialogo para editar
+    if (tutoriaEditando != null) {
         AlertDialog(
             onDismissRequest = { tutoriaEditando = null },
             confirmButton = {
                 Button(onClick = {
                     val actualizado = Tutoria(
-                        id = editando.id,
+                        id = tutoriaEditando!!.id,
                         materia = materia,
                         descripcion = descripcion,
                         hora = hora,
@@ -144,18 +136,9 @@ fun TutoriasScreen(modifier: Modifier = Modifier) {
                         nombreTutor = nombreTutor,
                         correoTutor = correoTutor
                     )
-
-                    RetrofitClient.apiService.actualizarTutoria(editando.id!!, actualizado)
-                        .enqueue(object : Callback<Tutoria> {
-                            override fun onResponse(call: Call<Tutoria>, response: Response<Tutoria>) {
-                                tutoriaEditando = null
-                                cargarTutorias()
-                            }
-
-                            override fun onFailure(call: Call<Tutoria>, t: Throwable) {
-                                Log.e("PUT", "Error al actualizar", t)
-                            }
-                        })
+                    viewModel.actualizarTutoria(actualizado.id!!, actualizado) {
+                        tutoriaEditando = null
+                    }
                 }) {
                     Text("Guardar cambios")
                 }
@@ -179,6 +162,7 @@ fun TutoriasScreen(modifier: Modifier = Modifier) {
         )
     }
 
+    // Dialogo para crear nueva tutoria
     if (mostrarDialogoNuevaTutoria) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoNuevaTutoria = false },
@@ -193,17 +177,9 @@ fun TutoriasScreen(modifier: Modifier = Modifier) {
                         nombreTutor = nombreTutor,
                         correoTutor = correoTutor
                     )
-                    RetrofitClient.apiService.crearTutoria(nuevaTutoria)
-                        .enqueue(object : Callback<Tutoria> {
-                            override fun onResponse(call: Call<Tutoria>, response: Response<Tutoria>) {
-                                mostrarDialogoNuevaTutoria = false
-                                cargarTutorias()
-                            }
-
-                            override fun onFailure(call: Call<Tutoria>, t: Throwable) {
-                                Log.e("POST", "Error al agregar", t)
-                            }
-                        })
+                    viewModel.crearTutoria(nuevaTutoria) {
+                        mostrarDialogoNuevaTutoria = false
+                    }
                 }) {
                     Text("Agregar")
                 }

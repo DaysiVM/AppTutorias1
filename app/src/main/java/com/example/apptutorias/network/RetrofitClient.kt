@@ -1,5 +1,6 @@
 package com.example.apptutorias.network
 
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -17,7 +18,18 @@ object RetrofitClient {
             "http://192.168.1.248:8181/api/"
         }
 
+    private val authInterceptor = Interceptor { chain ->
+        val requestBuilder = chain.request().newBuilder()
+
+        TokenProvider.token?.let { token ->
+            requestBuilder.addHeader("Authorization", "Bearer $token")
+        }
+
+        chain.proceed(requestBuilder.build())
+    }
+
     private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(authInterceptor) // <<--- AGREGA EL TOKEN AQUÍ
         .addInterceptor(HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         })
@@ -26,7 +38,7 @@ object RetrofitClient {
     val apiService: TutoriasApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(okHttpClient) // Usa el cliente con logging
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(TutoriasApiService::class.java)
