@@ -3,4 +3,9 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">10.0.2.2</domain>
     </domain-config>
-</network-security-config>
+
+    <!-- Permite HTTP para dispositivo real -->
+<domain-config cleartextTrafficPermitted="true">
+<domain includeSubdomains="true">192.168.1.248</domain>
+</domain-config>
+    </network-security-config>
