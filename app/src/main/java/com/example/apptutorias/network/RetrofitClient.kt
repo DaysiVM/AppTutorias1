@@ -29,7 +29,7 @@ object RetrofitClient {
     }
 
     private val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor(authInterceptor) // <<--- AGREGA EL TOKEN AQUÍ
+        .addInterceptor(authInterceptor)
         .addInterceptor(HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         })

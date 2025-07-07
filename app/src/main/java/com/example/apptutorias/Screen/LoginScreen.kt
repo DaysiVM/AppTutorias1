@@ -12,12 +12,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.livedata.observeAsState
 import com.example.apptutorias.viewmodel.LoginViewModel
+import com.example.apptutorias.viewmodel.LoginViewModelFactory
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = viewModel(),
-    onLoginSuccess: (String) -> Unit // callback que recibe el token
+    role: String,
+    onLoginSuccess: (String) -> Unit
 ) {
+    val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(role))
     val loginResult by viewModel.loginResult.observeAsState()
 
     var username by remember { mutableStateOf("") }
@@ -26,9 +28,7 @@ fun LoginScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center
     ) {
         TextField(
@@ -77,11 +77,7 @@ fun LoginScreen(
 
         errorMessage?.let {
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = it,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            Text(text = it, color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.CenterHorizontally))
         }
 
         loginResult?.let { result ->
