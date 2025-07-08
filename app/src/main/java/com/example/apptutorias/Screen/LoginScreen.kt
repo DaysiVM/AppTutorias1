@@ -1,11 +1,14 @@
 package com.example.apptutorias.Screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -14,6 +17,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import com.example.apptutorias.viewmodel.LoginViewModel
 import com.example.apptutorias.viewmodel.LoginViewModelFactory
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     role: String,
@@ -27,67 +31,117 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center
+    val backgroundColor = when (role) {
+        "student" -> Color(0xFFBBDEFB) // azul claro
+        "tutor" -> Color(0xFFC8E6C9)   // verde claro
+        else -> Color.White
+    }
+
+    val buttonColor = when (role) {
+        "student" -> Color(0xFF1976D2) // azul botón
+        "tutor" -> Color(0xFF388E3C)   // verde botón
+        else -> Color.Gray
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+            .padding(24.dp)
     ) {
-        TextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Usuario") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        TextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Contraseña") },
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            onClick = {
-                if (username.isBlank() || password.isBlank()) {
-                    errorMessage = "Por favor ingresa usuario y contraseña"
-                } else {
-                    isLoading = true
-                    errorMessage = null
-                    viewModel.login(username, password)
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center
         ) {
-            Text("Ingresar")
-        }
+            TextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Usuario") },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedIndicatorColor = buttonColor,
+                    unfocusedIndicatorColor = Color.LightGray,
+                    cursorColor = buttonColor
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        }
+            TextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Contraseña") },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedIndicatorColor = buttonColor,
+                    unfocusedIndicatorColor = Color.LightGray,
+                    cursorColor = buttonColor
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
 
-        errorMessage?.let {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(text = it, color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.CenterHorizontally))
-        }
+            Spacer(modifier = Modifier.height(24.dp))
 
-        loginResult?.let { result ->
-            isLoading = false
-            result.onSuccess { token ->
-                errorMessage = null
-                onLoginSuccess(token)
+            Button(
+                onClick = {
+                    if (username.isBlank() || password.isBlank()) {
+                        errorMessage = "Por favor ingresa usuario y contraseña"
+                    } else {
+                        isLoading = true
+                        errorMessage = null
+                        viewModel.login(username, password)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = buttonColor,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+            ) {
+                Text("Ingresar", style = MaterialTheme.typography.titleMedium)
             }
-            result.onFailure { error ->
-                errorMessage = error.message ?: "Error desconocido"
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    color = buttonColor
+                )
+            }
+
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
+
+            loginResult?.let { result ->
+                isLoading = false
+                result.onSuccess { token ->
+                    errorMessage = null
+                    onLoginSuccess(token)
+                }
+                result.onFailure { error ->
+                    errorMessage = error.message ?: "Error desconocido"
+                }
             }
         }
     }

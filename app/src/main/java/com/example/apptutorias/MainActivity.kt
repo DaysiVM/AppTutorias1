@@ -29,9 +29,11 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
 
-                    NavHost(navController, startDestination = "role_selection") {
+                    NavHost(navController = navController, startDestination = "role_selection") {
                         composable("role_selection") {
-                            RoleSelectionScreen(navController)
+                            RoleSelectionScreen { selectedRole ->
+                                navController.navigate("login/$selectedRole")
+                            }
                         }
                         composable("login/{role}") { backStackEntry ->
                             val role = backStackEntry.arguments?.getString("role") ?: "student"
