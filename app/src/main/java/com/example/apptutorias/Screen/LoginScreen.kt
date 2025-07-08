@@ -32,14 +32,14 @@ fun LoginScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val backgroundColor = when (role) {
-        "student" -> Color(0xFFBBDEFB) // azul claro
-        "tutor" -> Color(0xFFC8E6C9)   // verde claro
+        "student" -> Color(0xFFBBDEFB)
+        "tutor" -> Color(0xFFC8E6C9)
         else -> Color.White
     }
 
     val buttonColor = when (role) {
-        "student" -> Color(0xFF1976D2) // azul botón
-        "tutor" -> Color(0xFF388E3C)   // verde botón
+        "student" -> Color(0xFF1976D2)
+        "tutor" -> Color(0xFF388E3C)
         else -> Color.Gray
     }
 
@@ -65,7 +65,9 @@ fun LoginScreen(
                     unfocusedContainerColor = Color.White,
                     focusedIndicatorColor = buttonColor,
                     unfocusedIndicatorColor = Color.LightGray,
-                    cursorColor = buttonColor
+                    cursorColor = buttonColor,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -86,7 +88,9 @@ fun LoginScreen(
                     unfocusedContainerColor = Color.White,
                     focusedIndicatorColor = buttonColor,
                     unfocusedIndicatorColor = Color.LightGray,
-                    cursorColor = buttonColor
+                    cursorColor = buttonColor,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
