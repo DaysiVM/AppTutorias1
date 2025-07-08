@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.apptutorias.viewmodel.TutoriaViewModel
@@ -33,6 +34,9 @@ fun EstudianteScreen(
 
     var mensaje by remember { mutableStateOf("") }
     var filtroMateria by remember { mutableStateOf("") }
+    val tutoriasRegistradas = remember { mutableStateListOf<String>() }
+    var showRegistradas by remember { mutableStateOf(false) }
+    var tutorCorreo by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.cargarTutorias()
@@ -40,14 +44,15 @@ fun EstudianteScreen(
 
     LaunchedEffect(mensaje) {
         if (mensaje.isNotEmpty()) {
-            delay(2500)
+            delay(2000)
             mensaje = ""
         }
     }
 
     val fondo = Color.White
-    val tarjetaColor = Color(0xFFE8F5E9)
+    val tarjetaColor = Color(0xFFF1F8E9)
     val botonColor = Color(0xFF388E3C)
+    val textoColor = Color.Black
 
     Box(
         modifier = modifier
@@ -58,6 +63,7 @@ fun EstudianteScreen(
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         } else {
             Column(modifier = Modifier.fillMaxSize()) {
+
                 errorMessage?.let {
                     Text(
                         text = it,
@@ -66,7 +72,7 @@ fun EstudianteScreen(
                     )
                 }
 
-                // 🔍 Filtro materia
+                // 🔍 Filtro
                 OutlinedTextField(
                     value = filtroMateria,
                     onValueChange = { filtroMateria = it },
@@ -76,8 +82,11 @@ fun EstudianteScreen(
                         .padding(16.dp)
                 )
 
+
                 LazyColumn(
-                    modifier = Modifier.weight(1f).padding(16.dp)
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
                 ) {
                     val tutoriasFiltradas = if (filtroMateria.isBlank()) {
                         tutorias
@@ -96,20 +105,22 @@ fun EstudianteScreen(
                             elevation = CardDefaults.cardElevation(4.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text("Materia: ${tutoria.materia}")
-                                Text("Descripción: ${tutoria.descripcion}")
-                                Text("Hora: ${tutoria.hora}")
-                                Text("Costo: $${tutoria.costo}")
-                                Text("Tutor: ${tutoria.nombreTutor}")
+                                Text("Materia: ${tutoria.materia ?: "-"}", color = textoColor, fontWeight = FontWeight.Bold)
+                                Text("Descripción: ${tutoria.descripcion ?: "-"}", color = textoColor)
+                                Text("Hora: ${tutoria.hora ?: "-"}", color = textoColor)
+                                Text("Costo: $${tutoria.costo ?: 0.0}", color = textoColor)
+                                Text("Tutor: ${tutoria.nombreTutor ?: "-"}", color = textoColor)
 
                                 Spacer(modifier = Modifier.height(8.dp))
 
                                 Row(
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Button(
                                         onClick = {
                                             mensaje = "Te registraste en la tutoría ✅"
+                                            tutoria.materia?.let { tutoriasRegistradas.add(it) }
                                         },
                                         colors = ButtonDefaults.buttonColors(containerColor = botonColor)
                                     ) {
@@ -122,27 +133,57 @@ fun EstudianteScreen(
                                         Text("Registrarse", color = Color.White)
                                     }
 
-                                    if ((tutoria.costo ?: 0.0) > 0.0) {
-                                        OutlinedButton(
-                                            onClick = {
-                                                mensaje = "Contactar a ${tutoria.nombreTutor}: ${tutoria.correoTutor}"
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Email,
-                                                contentDescription = "Contactar"
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text("Contactar")
+                                    IconButton(
+                                        onClick = {
+                                            tutorCorreo = "${tutoria.correoTutor ?: "No disponible"}"
                                         }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Email,
+                                            contentDescription = "Ver correo"
+                                        )
                                     }
                                 }
                             }
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Botón para ver tutorías registradas
+                Button(
+                    onClick = { showRegistradas = !showRegistradas },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = botonColor)
+                ) {
+                    Text(
+                        text = if (showRegistradas) "Ocultar mis tutorías registradas" else "Ver mis tutorías registradas",
+                        color = Color.White
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = showRegistradas && tutoriasRegistradas.isNotEmpty(),
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text("Mis tutorías registradas:", fontWeight = FontWeight.Bold, color = textoColor)
+                        tutoriasRegistradas.distinct().forEach {
+                            Text("• $it", color = textoColor)
+                        }
+                    }
+                }
             }
         }
+
 
         AnimatedVisibility(
             visible = mensaje.isNotEmpty(),
@@ -160,6 +201,20 @@ fun EstudianteScreen(
                     modifier = Modifier.padding(16.dp)
                 )
             }
+        }
+
+
+        if (tutorCorreo != null) {
+            AlertDialog(
+                onDismissRequest = { tutorCorreo = null },
+                confirmButton = {
+                    TextButton(onClick = { tutorCorreo = null }) {
+                        Text("OK")
+                    }
+                },
+                title = { Text("Correo del tutor") },
+                text = { Text(tutorCorreo ?: "-") }
+            )
         }
     }
 }

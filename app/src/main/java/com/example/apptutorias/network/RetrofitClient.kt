@@ -15,7 +15,8 @@ object RetrofitClient {
         ) {
             "http://10.0.2.2:8181/api/"
         } else {
-            "http://192.168.1.248:8181/api/"
+           // "http://192.168.1.248:8181/api/"
+            "http://172.20.10.3:8181/api/"
         }
 
     private val authInterceptor = Interceptor { chain ->

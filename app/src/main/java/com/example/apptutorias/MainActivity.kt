@@ -11,9 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.apptutorias.Screen.LoginScreen
-import com.example.apptutorias.Screen.RoleSelectionScreen
-import com.example.apptutorias.Screen.TutoriasScreen
+import com.example.apptutorias.Screen.*
 import com.example.apptutorias.ui.theme.AppTutoriasTheme
 
 class MainActivity : ComponentActivity() {
@@ -39,15 +37,26 @@ class MainActivity : ComponentActivity() {
                             val role = backStackEntry.arguments?.getString("role") ?: "student"
                             LoginScreen(
                                 role = role,
-                                onLoginSuccess = {
-                                    navController.navigate("tutorias") {
-                                        popUpTo("login/$role") { inclusive = true }
+                                onLoginSuccess = { _, roles ->
+                                    if (roles.any { it.contains("TUTOR") }) {
+                                        navController.navigate("tutorScreen") {
+                                            popUpTo("login/$role") { inclusive = true }
+                                        }
+                                    } else if (roles.any { it.contains("ESTUDIANTE") }) {
+                                        navController.navigate("estudianteScreen") {
+                                            popUpTo("login/$role") { inclusive = true }
+                                        }
+                                    } else {
+                                        navController.navigate("role_selection")
                                     }
                                 }
                             )
                         }
-                        composable("tutorias") {
+                        composable("tutorScreen") {
                             TutoriasScreen()
+                        }
+                        composable("estudianteScreen") {
+                            EstudianteScreen()
                         }
                     }
                 }

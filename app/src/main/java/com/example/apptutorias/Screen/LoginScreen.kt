@@ -1,5 +1,6 @@
 package com.example.apptutorias.Screen
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,11 +10,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.livedata.observeAsState
+import com.example.apptutorias.util.getRolesFromJWT
 import com.example.apptutorias.viewmodel.LoginViewModel
 import com.example.apptutorias.viewmodel.LoginViewModelFactory
 
@@ -21,10 +24,12 @@ import com.example.apptutorias.viewmodel.LoginViewModelFactory
 @Composable
 fun LoginScreen(
     role: String,
-    onLoginSuccess: (String) -> Unit
+    onLoginSuccess: (String, List<String>) -> Unit
 ) {
     val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(role))
     val loginResult by viewModel.loginResult.observeAsState()
+
+    val context = LocalContext.current
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -57,8 +62,7 @@ fun LoginScreen(
                 value = username,
                 onValueChange = { username = it },
                 label = { Text("Usuario") },
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.White,
@@ -78,8 +82,7 @@ fun LoginScreen(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Contraseña") },
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
@@ -140,8 +143,14 @@ fun LoginScreen(
             loginResult?.let { result ->
                 isLoading = false
                 result.onSuccess { token ->
-                    errorMessage = null
-                    onLoginSuccess(token)
+                    val roles = getRolesFromJWT(token)
+
+                    // Guarda en SharedPreferences si quieres persistirlo:
+                    val prefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+                    prefs.edit().putString("jwt", token).apply()
+                    prefs.edit().putStringSet("roles", roles.toSet()).apply()
+
+                    onLoginSuccess(token, roles)
                 }
                 result.onFailure { error ->
                     errorMessage = error.message ?: "Error desconocido"
