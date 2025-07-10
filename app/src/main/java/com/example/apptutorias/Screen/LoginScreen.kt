@@ -1,6 +1,7 @@
 package com.example.apptutorias.Screen
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,6 +36,8 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    var bienvenidaMostrada by remember { mutableStateOf(false) }
 
     val backgroundColor = when (role) {
         "student" -> Color(0xFFBBDEFB)
@@ -107,6 +110,7 @@ fun LoginScreen(
                     } else {
                         isLoading = true
                         errorMessage = null
+                        bienvenidaMostrada = false
                         viewModel.login(username, password)
                     }
                 },
@@ -145,15 +149,21 @@ fun LoginScreen(
                 result.onSuccess { token ->
                     val roles = getRolesFromJWT(token)
 
-                    // Guarda en SharedPreferences si quieres persistirlo:
                     val prefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
                     prefs.edit().putString("jwt", token).apply()
                     prefs.edit().putStringSet("roles", roles.toSet()).apply()
 
+                    if (!bienvenidaMostrada) {
+                        Toast.makeText(context, "¡Hola $username!", Toast.LENGTH_LONG).show()
+                        bienvenidaMostrada = true
+                    }
+
                     onLoginSuccess(token, roles)
                 }
                 result.onFailure { error ->
-                    errorMessage = error.message ?: "Error desconocido"
+
+                    errorMessage = "Credenciales o datos incorrectos"
+                    isLoading = false
                 }
             }
         }

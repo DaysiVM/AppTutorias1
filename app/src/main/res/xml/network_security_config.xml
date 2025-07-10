@@ -6,6 +6,6 @@
 
     <!-- Permite HTTP para dispositivo real -->
 <domain-config cleartextTrafficPermitted="true">
-<domain includeSubdomains="true">172.20.10.3</domain>
+<domain includeSubdomains="true"> 172.20.10.3</domain>
 </domain-config>
     </network-security-config>
